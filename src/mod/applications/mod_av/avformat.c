@@ -1121,11 +1121,9 @@ static switch_status_t open_input_file(av_file_context_t *context, switch_file_h
 	switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_INFO, "file %s is %sseekable\n", filename, handle->seekable ? "" : "not ");
 
 	/** Get information on the input file (number of streams etc.). */
-	if (handle->stream_name && (!strcasecmp(handle->stream_name, "rtmp"))) {
-		switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_INFO, "set rtmp %s analyze duration 100ms\n", filename);
-		// set rtmp analyze_duration to 100 ms
-		context->fc->max_analyze_duration = 100000;
-	}
+	switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_INFO, "set %s analyze duration 100ms\n", filename);
+	// set analyze_duration to 100 ms
+	context->fc->max_analyze_duration = 100000;
 	if ((error = avformat_find_stream_info(context->fc, opts ? &opts : NULL)) < 0) {
 		char ebuf[255] = "";
 		switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_WARNING, "Could not open find stream info (error '%s')\n", get_error_text(error, ebuf, sizeof(ebuf)));
