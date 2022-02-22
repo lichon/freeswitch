@@ -1121,6 +1121,11 @@ static switch_status_t open_input_file(av_file_context_t *context, switch_file_h
 	switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_INFO, "file %s is %sseekable\n", filename, handle->seekable ? "" : "not ");
 
 	/** Get information on the input file (number of streams etc.). */
+	if (handle->stream_name && (!strcasecmp(handle->stream_name, "rtmp"))) {
+		switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_INFO, "set rtmp %s analyze duration 100ms\n", filename);
+		// set rtmp analyze_duration to 100 ms
+		context->fc->max_analyze_duration = 100000;
+	}
 	if ((error = avformat_find_stream_info(context->fc, opts ? &opts : NULL)) < 0) {
 		char ebuf[255] = "";
 		switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_WARNING, "Could not open find stream info (error '%s')\n", get_error_text(error, ebuf, sizeof(ebuf)));
@@ -1756,19 +1761,21 @@ static switch_status_t av_file_open(switch_file_handle_t *handle, const char *pa
 		handle->mm.vb = switch_calc_bitrate(handle->mm.vw, handle->mm.vh, 1, handle->mm.fps);
 	}
 
-	if (switch_test_flag(handle, SWITCH_FILE_FLAG_VIDEO) && fmt->video_codec != AV_CODEC_ID_NONE) {
+	// if (switch_test_flag(handle, SWITCH_FILE_FLAG_VIDEO) && fmt->video_codec != AV_CODEC_ID_NONE) {
+	if (fmt->video_codec != AV_CODEC_ID_NONE) {
 		const AVCodecDescriptor *desc;
 
 		if ((handle->stream_name && (!strcasecmp(handle->stream_name, "rtmp") || !strcasecmp(handle->stream_name, "youtube")))) {
 
+			// record to rtmp url
 			if (fmt->video_codec != AV_CODEC_ID_H264 ) {
 				fmt->video_codec = AV_CODEC_ID_H264; // force H264
 			}
 
 			fmt->audio_codec = AV_CODEC_ID_AAC;
-			handle->samplerate = 44100;
-			handle->mm.samplerate = 44100;
-			handle->mm.ab = 128;
+			handle->samplerate = 48000;//44100;
+			handle->mm.samplerate = 48000;//44100;
+			handle->mm.ab = 64;//128;
 			handle->mm.cbr = 1;
 			handle->mm.vencspd = SWITCH_VIDEO_ENCODE_SPEED_FAST;
 			handle->mm.vprofile = SWITCH_VIDEO_PROFILE_BASELINE;
